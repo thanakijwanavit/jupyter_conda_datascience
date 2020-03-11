@@ -154,22 +154,16 @@ RUN conda install --quiet --yes \
 # taking effect properly on the .local folder in the jovyan home dir.
 USER root
 
+RUN pip install jupyter_contrib_nbextensions && jupyter contrib nbextension install 
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     hdf5-tools \
+#    nvidia-cuda-toolkit \
+#    cuda-drivers \
     gcc && \
     rm -rf /var/lib/apt/lists/*
 
 
 USER $NB_UID
 
-#ENV TEST_ONLY_BUILD=true
-
-RUN julia -e 'import Pkg; Pkg.update()' && \
-    (test $TEST_ONLY_BUILD || julia -e 'import Pkg; Pkg.add("HDF5")') && \
-    julia -e "using Pkg; pkg\"add Gadfly RDatasets IJulia InstantiateFromURL\"; pkg\"precompile\"" && \ 
-    # move kernelspec out of home \
-    mv $HOME/.local/share/jupyter/kernels/julia* $CONDA_DIR/share/jupyter/kernels/ && \
-    chmod -R go+rx $CONDA_DIR/share/jupyter && \
-    rm -rf $HOME/.local && \
-    fix-permissions $JULIA_PKGDIR $CONDA_DIR/share/jupyter
